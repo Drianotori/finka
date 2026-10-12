@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.*
+!.env.example
+finka.db
+finka.db-wal
+finka.db-shm
+*.db
+*.dump
+backups/
+*.log

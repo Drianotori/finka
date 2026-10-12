@@ -1,0 +1,39 @@
+{
+  "name": "finka-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "seed": "node scripts/seed.js",
+    "dev": "node src/server.js",
+    "start": "node src/server.js",
+    "smoke-test": "node scripts/smoke-test.js",
+    "db:init": "node scripts/init-db.js",
+    "db:migrate-sqlite": "node scripts/migrate-sqlite-to-postgres.js",
+    "kontrol-test": "node scripts/kontrol-test.js",
+    "pin-test": "node scripts/pin-test.js",
+    "akun-test": "node scripts/akun-test.js",
+    "fitur-test": "node scripts/fitur-test.js",
+    "impor-test": "node scripts/impor-test.js",
+    "kasir-test": "node scripts/kasir-test.js",
+    "admin2-test": "node scripts/admin2-test.js",
+    "akun-baru-test": "node scripts/akun-baru-test.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.19.2",
+    "express-async-errors": "^3.1.1",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.16.3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^11.3.0"
+  }
+}

@@ -1,0 +1,90 @@
+<template>
+  <div class="wrap">
+    <ScreenHeader title="PIN Siswa" to="/pic/konfirmasi" dark />
+    <div class="intro">
+      <div class="intro__who display">{{ nama }} · {{ total | rp }}</div>
+      <p>Serahkan perangkat ke siswa. Masukkan 6 digit PIN.</p>
+    </div>
+
+    <div class="dots">
+      <span v-for="i in 6" :key="i" class="dot" :class="i <= pin.length ? 'dot--on' : ''"></span>
+    </div>
+    <div v-if="pesan" class="salah">{{ pesan }}</div>
+    <div v-else-if="pinGagal" class="salah">PIN salah. Sisa percobaan {{ Math.max(0, 5 - pinGagal) }}.</div>
+
+    <div class="spacer"></div>
+    <div class="pad">
+      <NumPad :keys="keypad" @key="tekan" @hapus="hapus" />
+    </div>
+    <div class="acak">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 118 0v3" /></svg>
+      <span>Posisi angka diacak setiap transaksi</span>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  middleware: ['auth', 'pic'],
+  layout: 'phone',
+  computed: {
+    pin() { return this.$store.state.pos.pin },
+    pinGagal() { return this.$store.state.pos.pinGagal },
+    loading() { return this.$store.state.pos.pinGagal >= 3 },
+    keypad() { return this.$store.state.pos.keypad },
+    total() { return this.$store.getters['pos/total'] },
+    nama() {
+      const s = this.$store.getters['pos/siswaScan']
+      return s ? s.nama : ''
+    }
+  },
+  data() { return { pesan: '' } },
+  mounted() {
+    if (!this.$store.getters['pos/siswaScan']) this.$router.replace('/pic')
+  },
+  methods: {
+    tekan(d) {
+      const pin = (this.pin + d).slice(0, 6)
+      this.$store.commit('pos/setPin', pin)
+      if (pin.length < 6) return
+      setTimeout(async () => {
+        try {
+          await this.$store.dispatch('pos/selesaikan')
+          this.$store.commit('pos/setPin', '')
+          this.$router.push('/pic/sukses')
+        } catch (e) {
+          this.$store.commit('pos/setPin', '')
+          this.$store.commit('pos/acakKeypad')
+          // Hanya "PIN salah" dari server yang dihitung sebagai salah PIN.
+          // Error lain (kartu diblokir, melebihi limit harian, QR kedaluwarsa,
+          // PIN terkunci) ditampilkan apa adanya supaya kasir tidak salah paham.
+          if (e && e.status === 401 && /^PIN salah/i.test(e.message || '')) {
+            this.pesan = ''
+            this.$store.commit('pos/gagalPin')
+          } else {
+            this.pesan = (e && e.message) || 'Transaksi gagal'
+          }
+        }
+      }, 260)
+    },
+    hapus() { this.$store.commit('pos/setPin', this.pin.slice(0, -1)) }
+  }
+}
+</script>
+
+<style scoped>
+.wrap { flex: 1; display: flex; flex-direction: column; background: var(--navy); padding-bottom: 26px; min-height: 0; }
+.intro { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 6px; padding: 0 22px; }
+.intro__who { font: 600 14px var(--font-display); color: #fff; }
+.intro p { margin: 0; font: 400 12.5px var(--font-body); color: rgba(255,255,255,.55); text-align: center; max-width: 250px; text-wrap: pretty; }
+
+.dots { display: flex; justify-content: center; gap: 12px; margin-top: 26px; }
+.dot { width: 14px; height: 14px; border-radius: var(--r-pill); border: 1.5px solid rgba(255,255,255,.35); }
+.dot--on { background: #fff; border-color: #fff; }
+.salah { margin-top: 16px; text-align: center; font: 600 12.5px var(--font-body); color: var(--coral); }
+
+.spacer { flex: 1; }
+.pad { padding: 0 22px; }
+.acak { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px; font: 400 11px var(--font-body); color: rgba(255,255,255,.4); }
+</style>
+

@@ -1,0 +1,23 @@
+{
+  "name": "finka",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "cross-env NODE_OPTIONS=--openssl-legacy-provider nuxt",
+    "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider nuxt build",
+    "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider nuxt start",
+    "generate": "cross-env NODE_OPTIONS=--openssl-legacy-provider nuxt generate"
+  },
+  "dependencies": {
+    "core-js": "^3.25.0",
+    "jsqr": "^1.4.0",
+    "nuxt": "^2.17.3",
+    "qrcode": "^1.5.4",
+    "vue": "^2.7.14",
+    "vue-server-renderer": "^2.7.14",
+    "vue-template-compiler": "^2.7.14"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
+  }
+}
