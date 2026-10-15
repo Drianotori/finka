@@ -14,7 +14,6 @@
 
     <div class="spacer"></div>
     <div class="pad">
-      <!-- Mencegah input saat proses verifikasi API berlangsung -->
       <NumPad :keys="keypad" :disabled="isSubmitting" @key="tekan" @hapus="hapus" />
     </div>
     <div class="acak">
@@ -31,7 +30,7 @@ export default {
   data() {
     return {
       pesan: '',
-      isSubmitting: false // Flag pengunci request ganda
+      isSubmitting: false // Flag pencegah double-submit
     }
   },
   computed: {
@@ -50,14 +49,12 @@ export default {
   },
   methods: {
     tekan(d) {
-      // Abaikan masukan jika request sedang diproses
       if (this.isSubmitting) return
 
       const pin = (this.pin + d).slice(0, 6)
       this.$store.commit('pos/setPin', pin)
       if (pin.length < 6) return
 
-      // Kunci input sesaat sebelum eksekusi PIN ke-6
       this.isSubmitting = true
 
       setTimeout(async () => {
@@ -76,7 +73,6 @@ export default {
             this.pesan = (e && e.message) || 'Transaksi gagal'
           }
         } finally {
-          // Buka kunci flag setelah proses API selesai
           this.isSubmitting = false
         }
       }, 260)
@@ -94,12 +90,10 @@ export default {
 .intro { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 6px; padding: 0 22px; }
 .intro__who { font: 600 14px var(--font-display); color: #fff; }
 .intro p { margin: 0; font: 400 12.5px var(--font-body); color: rgba(255,255,255,.55); text-align: center; max-width: 250px; text-wrap: pretty; }
-
 .dots { display: flex; justify-content: center; gap: 12px; margin-top: 26px; }
 .dot { width: 14px; height: 14px; border-radius: var(--r-pill); border: 1.5px solid rgba(255,255,255,.35); }
 .dot--on { background: #fff; border-color: #fff; }
 .salah { margin-top: 16px; text-align: center; font: 600 12.5px var(--font-body); color: var(--coral); }
-
 .spacer { flex: 1; }
 .pad { padding: 0 22px; }
 .acak { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px; font: 400 11px var(--font-body); color: rgba(255,255,255,.4); }
