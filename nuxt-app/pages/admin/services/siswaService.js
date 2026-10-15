@@ -1,11 +1,11 @@
 import { api } from '~/plugins/api'
 
 export default {
-  // Ambil daftar siswa
+  // Mengambil daftar siswa dengan parameter filter/pencarian
   getSiswa(params) {
     return api.get('/admin/siswa', { params })
   },
-  // Ambil detail siswa berdasarkan ID
+  // Detail data siswa berdasarkan ID
   getDetail(id) {
     return api.get(`/admin/siswa/${id}`)
   },
@@ -13,7 +13,7 @@ export default {
   tambah(data) {
     return api.post('/admin/siswa', data)
   },
-  // Update data siswa
+  // Perbarui data siswa
   update(id, data) {
     return api.put(`/admin/siswa/${id}`, data)
   },
@@ -21,12 +21,8 @@ export default {
   hapus(id) {
     return api.delete(`/admin/siswa/${id}`)
   },
-  // Topup saldo siswa dari admin
+  // Topup saldo dari panel admin
   topup(id, payload) {
     return api.post(`/admin/siswa/${id}/topup`, payload)
-  },
-  // Reset PIN siswa
-  resetPin(id) {
-    return api.post(`/admin/siswa/${id}/reset-pin`)
   }
 }
