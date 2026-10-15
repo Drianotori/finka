@@ -29,7 +29,16 @@ import { api } from '~/plugins/api'
 export default {
   layout: 'phone',
   middleware: ['auth', 'siswa'],
-  data() { return { detik: 0, timer: null, token: null, error: '', memuat: false } },
+  data() {
+    return {
+      detik: 0,
+      timer: null,
+      token: null,
+      error: '',
+      memuat: false,
+      errorCount: 0 // Counter untuk menghentikan polling jika terjadi error berulang
+    }
+  },
   computed: {
     siswa() { return this.$store.state.siswa.profil || { inisial: '', nama: '', kelas: '' } },
     saldo() { return this.$store.state.siswa.saldo }
@@ -37,23 +46,58 @@ export default {
   async mounted() {
     await this.$store.dispatch('siswa/muat')
     await this.refreshQr()
-    this.timer = setInterval(() => {
-      if (this.detik <= 1) this.refreshQr()
-      else this.detik--
-    }, 1000)
+    this.startTimer()
   },
-  beforeDestroy() { if (this.timer) clearInterval(this.timer) },
+  beforeDestroy() {
+    this.stopTimer()
+  },
   methods: {
+    startTimer() {
+      this.stopTimer()
+      this.timer = setInterval(() => {
+        if (this.detik <= 1) {
+          this.refreshQr()
+        } else {
+          this.detik--
+        }
+      }, 1000)
+    },
+    stopTimer() {
+      if (this.timer) {
+        clearInterval(this.timer)
+        this.timer = null
+      }
+    },
     async refreshQr() {
       if (this.memuat) return
-      this.memuat = true; this.error = ''
+      this.memuat = true
+      this.error = ''
+
       try {
         const data = await api.qrSiswa()
         this.token = data.token
         this.detik = data.expires_in
-        await QRCode.toCanvas(this.$refs.qr, data.token, { width: 224, margin: 1, errorCorrectionLevel: 'M' })
-      } catch (e) { this.error = e.message || 'QR gagal dimuat' }
-      finally { this.memuat = false }
+        this.errorCount = 0 // Reset hitungan error jika request berhasil
+
+        if (this.$refs.qr) {
+          await QRCode.toCanvas(this.$refs.qr, data.token, {
+            width: 224,
+            margin: 1,
+            errorCorrectionLevel: 'M'
+          })
+        }
+      } catch (e) {
+        this.errorCount++
+        this.error = e.message || 'QR gagal dimuat'
+
+        // Hentikan interval timer jika mengalami error berulang (maksimal 3 kali berturut-turut)
+        if (this.errorCount >= 3) {
+          this.stopTimer()
+          this.error = (e.message || 'QR gagal dimuat') + '. Polling dihentikan.'
+        }
+      } finally {
+        this.memuat = false
+      }
     }
   }
 }
@@ -76,9 +120,9 @@ export default {
 .timer { display: flex; align-items: center; gap: 9px; font: 500 12px var(--font-body); color: var(--muted); }
 .timer i { width: 7px; height: 7px; border-radius: var(--r-pill); background: var(--green); animation: fkPulse 1.6s ease-in-out infinite; }
 .pinnote {
-  display: flex; align-items: center; gap: 9px;
+  display: flex; align-items: center; gap: 99px;
   background: rgba(255,255,255,.08); border-radius: var(--r-pill); padding: 9px 16px;
   font: 400 12px var(--font-body); color: rgba(255,255,255,.7);
 }
+.error { color: var(--coral, #ff6b6b); font: 500 12px var(--font-body); text-align: center; }
 </style>
-
