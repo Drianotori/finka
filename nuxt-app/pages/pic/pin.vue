@@ -28,15 +28,11 @@ export default {
   middleware: ['auth', 'pic'],
   layout: 'phone',
   data() {
-    return {
-      pesan: '',
-      isSubmitting: false // Flag pencegah double-submit
-    }
+    return { pesan: '', isSubmitting: false }
   },
   computed: {
     pin() { return this.$store.state.pos.pin },
     pinGagal() { return this.$store.state.pos.pinGagal },
-    loading() { return this.$store.state.pos.pinGagal >= 3 },
     keypad() { return this.$store.state.pos.keypad },
     total() { return this.$store.getters['pos/total'] },
     nama() {
