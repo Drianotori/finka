@@ -1,41 +1,63 @@
 <template>
   <div class="wrap">
+    <div v-if="konfirmasi" class="dlg" @click.self="konfirmasi = null">
+      <div class="dlg__box" role="alertdialog" aria-modal="true" aria-labelledby="dlg-judul">
+        <div id="dlg-judul" class="dlg__judul display">Batalkan pesanan?</div>
+        <p class="dlg__teks">{{ konfirmasi.nama }} akan dihapus dari pesanan{{ jumlah === 1 ? ', sehingga pesanan menjadi batal' : '' }}.</p>
+        <div class="dlg__aksi">
+          <button type="button" class="dlg__btn" @click="konfirmasi = null">Tidak</button>
+          <button type="button" class="dlg__btn dlg__btn--bahaya" @click="batalkanPesanan">Ya, batalkan</button>
+        </div>
+      </div>
+    </div>
     <header class="head">
       <div>
-        <div class="outlet display">{{ outletNama }}</div>
-        <div class="sesi">{{ userNama }} · akses terbatas untuk outlet ini</div>
+        <div class="outlet display">{{ info.nama }}</div>
+        <div class="sesi">Sesi {{ info.sesi }}</div>
       </div>
       <div class="kanan">
-        <span class="head-link"><nuxt-link to="/pic/riwayat" class="link-riwayat">Riwayat &amp; tutup kas</nuxt-link></span>
-        <span class="kas num" style="cursor:pointer" title="Klik untuk mengatur kas awal hari ini" @click="aturKas">Kas tunai {{ kasSesi === null ? "belum diisi" : $rp(kasSesi) }}</span>
+        <div class="kanan__atas">
+          <span class="badge badge--ok">Online</span>
+          <nuxt-link to="/pic/riwayat" class="riwayat" aria-label="Riwayat transaksi">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 109-9 9 9 0 00-6.4 2.7L3 8" /><path d="M3 4v4h4" /><path d="M12 7v5l3 2" /></svg>
+          </nuxt-link>
+        </div>
+        <span class="kas num">Kas tunai {{ kasSesi | rp }}</span>
       </div>
     </header>
 
-
-    <div class="product-head"><div><b class="display">Produk {{ outletNama }}</b><span>Hanya produk dari outlet akun ini</span></div><div class="head-aksi"><button class="btn-ghost" @click="bukaKelola">Kelola</button><button class="btn-add" @click="bukaTambah">+ Tambah produk</button></div></div>
-
     <div class="grid">
-      <button v-for="p in produk" :key="p.id" class="prod" :class="cart[p.id] ? 'prod--on' : ''" @click="tambah(p.id)">
+      <div
+        v-for="p in produk"
+        :key="p.id"
+        class="prod"
+        :class="cart[p.id] ? 'prod--on' : ''"
+        role="button"
+        tabindex="0"
+        @click="tambah(p.id)"
+        @keydown.enter="tambah(p.id)"
+        @keydown.space.prevent="tambah(p.id)"
+      >
         <div class="prod__top">
           <span class="tile">{{ p.tile }}</span>
-          <span v-if="cart[p.id]" class="qty-wrap" @click.stop>
-            <button class="qty-btn" @click="kurangi(p.id)">−</button>
-            <span class="qty">{{ cart[p.id] }}</span>
-            <button class="qty-btn" @click="tambah(p.id)">+</button>
-          </span>
+          <div v-if="cart[p.id]" class="stepper" @click.stop>
+            <button type="button" class="step" aria-label="Kurangi" @click="kurang(p)">−</button>
+            <span class="step__qty num">{{ cart[p.id] }}</span>
+            <button type="button" class="step" aria-label="Tambah" @click="tambah(p.id)">+</button>
+          </div>
         </div>
         <div class="prod__body">
           <div class="prod__nama">{{ p.nama }}</div>
           <div class="prod__ket">{{ p.ket }}</div>
         </div>
         <div class="prod__harga display num">{{ p.harga | rp }}</div>
-      </button>
+      </div>
     </div>
 
     <footer class="foot">
       <div class="foot__row">
         <span class="foot__count">{{ jumlah }} item</span>
-        <button class="kosong" :class="total ? '' : 'is-off'" @click="kosongkan">Reset</button>
+        <button class="kosong" :class="total ? '' : 'is-off'" @click="kosongkan">Kosongkan</button>
       </div>
       <div class="foot__row foot__row--total">
         <span>Total</span>
@@ -52,88 +74,41 @@
         </nuxt-link>
       </div>
     </footer>
-
-    <div v-if="kelola.buka" class="modal-overlay" @click.self="kelola.buka = false">
-      <div class="modal modal--lebar">
-        <h2 class="display">Kelola Produk</h2>
-        <p class="modal-sub">Ubah harga atau hapus produk {{ outletNama }}. Transaksi yang sudah terjadi tidak berubah.</p>
-        <p v-if="kelola.error" class="error">{{ kelola.error }}</p>
-        <div v-if="!kelola.daftar.length" class="modal-sub">Belum ada produk.</div>
-        <div v-for="k in kelola.daftar" :key="k.id" class="kelola-baris">
-          <input v-model="k.nama" class="input" aria-label="Nama produk" />
-          <input v-model.number="k.harga" type="number" min="1" class="input input--harga" aria-label="Harga" />
-          <button class="btn-add" :disabled="kelola.sibuk" @click="simpanUbah(k)">Simpan</button>
-          <button class="btn-bahaya" :disabled="kelola.sibuk" @click="hapus(k)">Hapus</button>
-        </div>
-        <div class="modal-actions" style="margin-top:14px"><button type="button" class="btn-cancel" @click="kelola.buka = false">Tutup</button></div>
-      </div>
-    </div>
-
-    <div v-if="modal" class="modal-overlay" @click.self="modal = false">
-      <div class="modal">
-        <h2 class="display">Tambah Produk</h2>
-        <p class="modal-sub">Produk akan otomatis masuk ke {{ outletNama }}.</p>
-        <form @submit.prevent="simpanProduk">
-          <label>Nama produk<input v-model="form.nama" class="input" required placeholder="Contoh: Roti cokelat" /></label>
-          <label>Harga jual<input v-model.number="form.harga" type="number" min="1" class="input" required placeholder="5000" /></label>
-          <p v-if="error" class="error">{{ error }}</p>
-          <div class="modal-actions"><button type="button" class="btn-cancel" @click="modal=false">Batal</button><button class="btn-add" type="submit" :disabled="loading">{{ loading ? 'Menyimpan…' : 'Simpan Produk' }}</button></div>
-        </form>
-      </div>
-    </div>
   </div>
 </template>
 
 <script>
-import { api } from '~/plugins/api'
+import { OUTLET_INFO } from '~/store/pos.js'
 
 export default {
   layout: 'phone',
-  middleware: ['auth', 'pic'],
-  data() { return { modal: false, loading: false, error: '', form: { nama: '', harga: null }, kelola: { buka: false, sibuk: false, error: '', daftar: [] } } },
-  async mounted() { await this.$store.dispatch('muatData'); this.$store.dispatch('pos/muatKas').catch(() => {}) },
+  data() {
+    return { konfirmasi: null }
+  },
   computed: {
-    user() { return this.$store.state.auth.user || {} },
-    userNama() { return this.user.nama || 'PIC' },
-    outletKey() { return this.user.outlet },
-    outletNama() {
-      return ({ kantin_utama: 'Kantin Utama', kantin_b: 'Kantin Blok B', koperasi: 'Koperasi Sekolah' })[this.outletKey] || 'Outlet'
-    },
+    outlet() { return this.$store.state.pos.outlet },
+    info() { return OUTLET_INFO[this.outlet] || OUTLET_INFO[0] },
     cart() { return this.$store.state.pos.cart },
     kasSesi() { return this.$store.state.pos.kasSesi },
-    produk() { return this.$store.state.produk },
+    produk() { return this.$store.getters.produkOutlet(this.outlet) },
     total() { return this.$store.getters['pos/totalBelanja'] },
     jumlah() { return this.$store.getters['pos/jumlahItem'] }
   },
   methods: {
-    async aturKas() {
-      const v = window.prompt('Kas awal di laci hari ini (Rp)', this.$store.state.pos.kasAwal === null ? '' : String(this.$store.state.pos.kasAwal))
-      if (v === null) return
-      const n = this.$parseRp(v)
-      try { this.$store.commit('pos/setKas', await api.setKas(n)) } catch (e) { window.alert(e.message) }
-    },
     tambah(id) { this.$store.commit('pos/tambah', id) },
-    kurangi(id) { this.$store.commit('pos/kurangi', id) },
+    // Sisa 1 lalu klik "−" = minta konfirmasi untuk membatalkan pesanan item itu
+    kurang(p) {
+      if (this.cart[p.id] <= 1) {
+        this.konfirmasi = { id: p.id, nama: p.nama }
+        return
+      }
+      this.$store.commit('pos/kurang', p.id)
+    },
+    batalkanPesanan() {
+      if (this.konfirmasi) this.$store.commit('pos/hapusItem', this.konfirmasi.id)
+      this.konfirmasi = null
+    },
     kosongkan() { this.$store.commit('pos/kosongkan') },
-    bukaKelola() { this.kelola = { buka: true, sibuk: false, error: '', daftar: this.produk.map((x) => ({ id: x.id, nama: x.nama, harga: x.harga })) } },
-    async simpanUbah(k) {
-      this.kelola.error = ''; this.kelola.sibuk = true
-      try { await this.$store.dispatch('ubahProduk', { id: k.id, nama: k.nama, harga: k.harga }) } catch (e) { this.kelola.error = e.message } finally { this.kelola.sibuk = false }
-    },
-    async hapus(k) {
-      if (!window.confirm('Hapus produk "' + k.nama + '"?')) return
-      this.kelola.error = ''; this.kelola.sibuk = true
-      try { await this.$store.dispatch('hapusProduk', k.id); this.kelola.daftar = this.kelola.daftar.filter((x) => x.id !== k.id); this.$store.commit('pos/hapusItem', k.id) } catch (e) { this.kelola.error = e.message } finally { this.kelola.sibuk = false }
-    },
-    bukaTambah() { this.form = { nama: '', harga: null }; this.error = ''; this.modal = true },
-    async simpanProduk() {
-      this.error = ''; this.loading = true
-      try {
-        const data = await this.$store.dispatch('tambahProduk', { nama: this.form.nama, harga: this.form.harga })
-        if (!data) throw new Error('Produk gagal ditambahkan')
-        this.modal = false
-      } catch (e) { this.error = e.message || 'Gagal menambahkan produk' } finally { this.loading = false }
-    },
     scan() {
       if (!this.total) return
       this.$store.commit('pos/setMode', 'belanja')
@@ -144,15 +119,17 @@ export default {
 </script>
 
 <style scoped>
-.wrap { flex: 1; display: flex; flex-direction: column; background: #fff; min-height: 0; }
+.wrap { position: relative; flex: 1; display: flex; flex-direction: column; background: #fff; min-height: 0; }
 .head { padding: 8px 18px 14px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: none; }
 .outlet { font: 700 15px var(--font-display); }
 .sesi { font: 400 11.5px var(--font-body); color: var(--muted); margin-top: 2px; }
 .kanan { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-.link-riwayat { font: 600 11.5px var(--font-body); color: var(--blue); text-decoration: none; }
+.kanan__atas { display: flex; align-items: center; gap: 8px; }
 .kas { font: 400 10.5px var(--font-body); color: var(--muted); }
+.riwayat { display: flex; color: var(--muted); padding: 3px; margin: -3px; border-radius: var(--r-pill); }
+.riwayat:hover { color: var(--blue); background: var(--blue-soft); }
 
-.grid { flex: 1; overflow-y: auto; padding: 6px 18px 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: start; }
+.grid { flex: 1; overflow-y: auto; padding: 14px 18px 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: start; }
 .prod {
   border: 1px solid var(--line); background: #fff; border-radius: var(--r-md);
   padding: 13px; display: flex; flex-direction: column; gap: 10px;
@@ -166,13 +143,19 @@ export default {
   display: flex; align-items: center; justify-content: center; font: 700 12px var(--font-display);
 }
 .prod--on .tile { background: var(--blue); color: #fff; }
-.qty-wrap { display:flex; align-items:center; gap:3px; }
-.qty-btn { width:22px; height:22px; border:1px solid var(--line); border-radius:var(--r-pill); background:#fff; color:var(--ink); cursor:pointer; font:700 13px var(--font-body); line-height:1; padding:0; }
-.qty {
-  min-width: 22px; height: 22px; border-radius: var(--r-pill);
-  background: var(--blue); color: #fff; font: 700 11.5px var(--font-body);
-  display: flex; align-items: center; justify-content: center; padding: 0 6px;
+.stepper {
+  display: flex; align-items: center; gap: 1px;
+  background: var(--blue); border-radius: var(--r-pill); padding: 2px;
 }
+.step {
+  width: 20px; height: 20px; border: none; flex: none;
+  background: rgba(255,255,255,.16); color: #fff; border-radius: var(--r-pill);
+  display: flex; align-items: center; justify-content: center;
+  font: 700 14px var(--font-display); line-height: 1; cursor: pointer; padding: 0;
+}
+.step:hover { background: rgba(255,255,255,.32); }
+.step:active { background: rgba(255,255,255,.42); }
+.step__qty { min-width: 16px; text-align: center; color: #fff; font: 700 11.5px var(--font-body); }
 .prod__body { flex: 1; }
 .prod__nama { font: 600 13px/1.35 var(--font-body); text-wrap: pretty; }
 .prod__ket { font: 400 11px var(--font-body); color: var(--muted); margin-top: 2px; }
@@ -192,30 +175,13 @@ export default {
   display: flex; align-items: center; gap: 9px;
 }
 .tunai:hover { color: var(--blue); background: var(--blue-soft); }
-
-.product-head { padding: 12px 18px 4px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
-.product-head b { display:block; font-size:13px; }
-.product-head span { display:block; margin-top:2px; font:400 11px var(--font-body); color:var(--muted); }
-.btn-add { border:none; background:var(--blue); color:#fff; padding:9px 13px; border-radius:var(--r-sm); font:600 12px var(--font-body); cursor:pointer; }
-.head-aksi { display:flex; gap:8px; }
-.btn-ghost { border:1px solid var(--line); background:#fff; color:var(--ink); padding:9px 13px; border-radius:var(--r-sm); font:600 12px var(--font-body); cursor:pointer; }
-.btn-bahaya { border:1px solid var(--coral); background:#fff; color:var(--coral); padding:9px 11px; border-radius:var(--r-sm); font:600 12px var(--font-body); cursor:pointer; }
-.btn-bahaya:disabled { opacity:.6; cursor:not-allowed; }
-.modal--lebar { width:min(520px,100%); max-height:calc(100vh - 40px); overflow-y:auto; }
-.kelola-baris { display:flex; gap:6px; align-items:center; margin-bottom:8px; }
-.kelola-baris .input { min-width:0; flex:1; }
-.kelola-baris .input--harga { flex:0 0 92px; }
-.btn-add:disabled { opacity:.6; cursor:not-allowed; }
-.modal-overlay { position:fixed; inset:0; background:rgba(11,25,43,.45); display:flex; align-items:center; justify-content:center; padding:20px; z-index:20; }
-.modal { width:min(420px,100%); background:#fff; border-radius:var(--r-lg); padding:22px; box-shadow:0 20px 60px rgba(0,0,0,.18); }
-.modal h2 { margin:0; font-size:18px; }
-.modal-sub { margin:5px 0 18px; font:400 12px/1.5 var(--font-body); color:var(--muted); }
-.modal form { display:flex; flex-direction:column; gap:14px; }
-.modal label { display:flex; flex-direction:column; gap:6px; font:600 12px var(--font-body); }
-.input { border:1px solid var(--line); border-radius:var(--r-sm); padding:11px 12px; font:500 13px var(--font-body); outline:none; }
-.input:focus { border-color:var(--blue); }
-.error { margin:0; color:var(--coral); font:500 12px var(--font-body); }
-.modal-actions { display:flex; justify-content:flex-end; gap:8px; }
-.btn-cancel { border:1px solid var(--line); background:#fff; padding:9px 13px; border-radius:var(--r-sm); font:600 12px var(--font-body); cursor:pointer; }
+.dlg { position: absolute; inset: 0; z-index: 20; background: rgba(10, 13, 59, .45); display: flex; align-items: center; justify-content: center; padding: 24px; }
+.dlg__box { background: #fff; border-radius: var(--r-md); padding: 20px; width: 100%; box-shadow: 0 16px 40px rgba(10, 13, 59, .3); }
+.dlg__judul { font: 700 16px var(--font-display); }
+.dlg__teks { margin: 6px 0 16px; font: 400 13px/1.5 var(--font-body); color: var(--muted); }
+.dlg__aksi { display: flex; gap: 10px; }
+.dlg__btn { flex: 1; padding: 12px; border-radius: var(--r-sm); border: 1px solid var(--line); background: #fff; color: var(--ink); font: 700 13.5px var(--font-display); cursor: pointer; }
+.dlg__btn:hover { border-color: #CBD0DB; }
+.dlg__btn--bahaya { background: var(--coral); border-color: var(--coral); color: #fff; }
+.dlg__btn--bahaya:hover { background: #C73C2B; border-color: #C73C2B; }
 </style>
-
