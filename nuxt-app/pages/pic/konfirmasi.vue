@@ -5,7 +5,7 @@
       <div class="who">
         <div class="foto">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--sand)" stroke-width="1.6"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6" /></svg>
-          <span>{{ siswa.kelas }}</span>
+          <span>foto siswa<br />(placeholder)</span>
         </div>
         <div class="who__id">
           <div class="nama display">{{ siswa.nama }}</div>
@@ -44,7 +44,6 @@
 
 <script>
 export default {
-  middleware: ['auth', 'pic'],
   layout: 'phone',
   computed: {
     siswa() { return this.$store.getters['pos/siswaScan'] },
@@ -107,4 +106,3 @@ export default {
 .btn--bad { background: var(--coral); color: #fff; }
 .spacer { flex: 1; }
 </style>
-
