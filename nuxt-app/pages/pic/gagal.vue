@@ -14,6 +14,7 @@
         <div><span class="kuat">Kurang</span><b class="display num besar">{{ kurang | rp }}</b></div>
       </div>
 
+      <p class="notif">Notifikasi otomatis dikirim ke orang tua</p>
     </div>
 
     <div class="aksi">
@@ -25,7 +26,6 @@
 
 <script>
 export default {
-  middleware: ['auth', 'pic'],
   layout: 'phone',
   computed: {
     siswa() { return this.$store.getters['pos/siswaScan'] },
@@ -65,4 +65,3 @@ export default {
 .btn--putih { background: #fff; color: var(--coral); }
 .btn--outline { background: transparent; border: 1px solid rgba(255,255,255,.4); color: #fff; font: 600 14px var(--font-body); padding: 14px; }
 </style>
-
