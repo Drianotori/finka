@@ -27,7 +27,7 @@
 
       <div class="kas">
         <span>Kas tunai di laci</span>
-        <b class="display num" :class="kasSesi !== null && tunai > kasSesi ? 'is-bad' : ''">{{ kasSesi === null ? 'Belum diisi' : $rp(kasSesi) }}</b>
+        <b class="display num" :class="tunai > kasSesi ? 'is-bad' : ''">{{ kasSesi | rp }}</b>
       </div>
 
       <div class="pad">
@@ -44,7 +44,6 @@
 
 <script>
 export default {
-  middleware: ['auth', 'pic'],
   layout: 'phone',
   data() {
     return {
@@ -52,11 +51,10 @@ export default {
       padKeys: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '000', '0', '⌫']
     }
   },
-  mounted() { this.$store.dispatch('pos/muatKas').catch(() => {}) },
   computed: {
     tunai() { return this.$store.state.pos.tunai },
     kasSesi() { return this.$store.state.pos.kasSesi },
-    valid() { return this.tunai > 0 && (this.kasSesi === null || this.tunai <= this.kasSesi) }
+    valid() { return this.tunai > 0 && this.tunai <= this.kasSesi }
   },
   created() {
     this.$store.commit('pos/setMode', 'tunai')
@@ -102,4 +100,3 @@ export default {
 }
 .key:hover { background: var(--blue-soft); }
 </style>
-
